@@ -1,4 +1,5 @@
 ---
+# COMMENTED PARAMETERS IMPLIES THERE ARE CONFLICTING PARAMETERS.
 - hosts: localhost
   vars:
     GUID:         "{{ GUID3 | default('ab12') }}"
@@ -28,13 +29,27 @@
         state: available
         zone: us-south-3
         vpc: "{{ sandbox_vpc.resource.id }}"
-      
+      register: sandbox_subnet
+    
+   # Pending to solve by IBM   
     - name: Create Floating IP
       ibm_is_floating_ip:
         name: float-1
-        address: 10.240.128.12
+        # address: 10.240.128.12
         state: available
         resource_group: "{{ sandbox_name.resource.id }}"
 
 # Create VM (Loop)
+    - name: Create VM
+      ibm_compute_vm_instance:
+        hostname: "{{ item }}"
+        cores: 4
+        public_subnet: "{{ sandbox_subnet.resource.id }}"
+        disks: 2
+        state: available
+        resource_group: "{{ sandbox_name.resource.id }}"
+      loop:
+        - vm1
+        - vm2
+        - vm3
 # Assign IP to VM
