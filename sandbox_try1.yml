@@ -1,0 +1,40 @@
+---
+- hosts: localhost
+  vars:
+    GUID:         "{{ GUID3 | default('ab12') }}"
+    net_prefix:   "{{ net_3prefix | default('auto') }}" 
+  collections:
+    - ibmcloud.ibmcollection
+
+  tasks:
+    - name: Create resource group
+      ibm_resource_group:
+        name: "sandbox-{{ GUID }}"
+        state: available
+      register: sandbox_name
+      
+    - name: Create VPC
+      ibm_is_vpc:
+        address_prefix_management: "{{ net_prefix }}"
+        name: "vpc-{{ GUID }}"
+        state: available
+        resource_group: "{{ sandbox_name.resource.id }}"
+      register: sandbox_vpc
+
+    - name: Create Subnet
+      ibm_is_subnet:
+        name: "sandbox-{{ GUID }}"
+        ipv4_cidr_block: 10.240.128.0/24
+        state: available
+        zone: us-south-3
+        vpc: "{{ sandbox_vpc.resource.id }}"
+      
+    - name: Create Floating IP
+      ibm_is_floating_ip:
+        name: float-1
+        address: 10.240.128.12
+        state: available
+        resource_group: "{{ sandbox_name.resource.id }}"
+
+# Create VM (Loop)
+# Assign IP to VM
